@@ -7,26 +7,32 @@ import java.net.URL;
 
 /**
  * Created by Gabriel Vilen on 2016-10-26.
- *
  */
 public class RESTClient {
 
     public static void main(String[] args) {
-        String eventName = "HUMAN_PARTY";
-
         RESTClient client = new RESTClient();
-        client.send("http://api-server.eu-gb.mybluemix.net/api/Calendars", "PUT", "Content-Type", "{\"name\":\""+eventName+"\",\"date\":\"2018-06-01\"}");
-        client.send("http://api-server.eu-gb.mybluemix.net/api/Calendars/timeToDate", "GET", "Accept", "{\"eventName\":\""+eventName+"\"}");
+
+        String url = "http://api-server.eu-gb.mybluemix.net/api/Calendars";
+        String eventName = "HUMAN_PARTY";
+        String parameter = "{\"name\":\"" + eventName + "\",\"date\":\"2018-06-01\"}";
+
+        client.send(url, "PUT", "Content-Type", parameter);
+
+        parameter = "{\"eventName\":\"" + eventName + "\"}";
+        client.send(url + "/timeToDate", "GET", "Accept", parameter);
     }
 
-    private void send(String urlLookup, String methodType, String contentType, String parameter) {
+    // http://api-server.eu-gb.mybluemix.net/api/Calendars/timeToDate?Accept=application/json&eventName=HUMAN_PARTY
+    private void send(String urlStr, String methodType, String contentType, String parameter) {
         try {
-            URL url = new URL(urlLookup);
+            URL url = new URL(urlStr);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
             connection.setDoOutput(true);
             connection.setRequestMethod(methodType);
             connection.setRequestProperty(contentType, "application/json");
+         //    connection.setRequestProperty("eventName", "\"HUMAN_PARTY\""); TODO: does not wrOk
 
             System.out.println("Sending: \n" + parameter + "\nto: " + url);
 
@@ -46,7 +52,7 @@ public class RESTClient {
 
     private void printResponse(HttpURLConnection connection) throws IOException {
         if (connection.getResponseCode() != 200) {
-            throw new RuntimeException("Connection to server failed : Error " + connection.getResponseCode());
+            throw new RuntimeException("Connection failed : Error " + connection.getResponseCode());
         }
 
         BufferedReader reader = new BufferedReader(new InputStreamReader((connection.getInputStream())));
