@@ -24,9 +24,6 @@
     "fs.realpath": "^1.0.0"
   },
   "optionalDependencies": {
-    "loopback-connector-mysql": "^1.2.1",
-    "loopback-connector-mongodb": "^1.2.5",
-    "loopback-connector-oracle": "^1.2.1"
   },
   "devDependencies": {
     "jshint": "^2.7.0",
