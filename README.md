@@ -12,7 +12,7 @@ $ npm install -g strongloop
 If you run into any issues, see [Installing StrongLoop](http://docs.strongloop.com/display/LB/Installing+StrongLoop)
 for more information.
 
-## EC Exercise 4.3
+## EC Exercise 2.1
 
 This application was created using LoopBack tools. 
 See [Building from scratch](#building-from-scratch) below for more details.
