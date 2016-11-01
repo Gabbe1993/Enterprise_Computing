@@ -1,5 +1,5 @@
 {
-  "name": "ISE_EC_Exercise_4_-_Calendar_app",
+  "name": "ISE_EC_Exercise_2-1_-_Calendar_app",
   "version": "0.0.1",
   "description": "TBD",
   "main": "server/server.js",
@@ -20,7 +20,8 @@
     "shuffle": "~0.2.1",
     "text-table": "~0.2.0",
     "weighted": "~0.2.2",
-		"strong-start": "~1.3.2"
+    "strong-start": "~1.3.2",
+    "fs.realpath": "^1.0.0"
   },
   "optionalDependencies": {
     "loopback-connector-mysql": "^1.2.1",
