@@ -2,30 +2,14 @@ var moment = require('moment');
 var MongoClient = require('mongodb').MongoClient
     , assert = require('assert');
 
-// Connection URL
-var url = 'mongodb://localhost:27017/EC_DB';
-// Use connect method to connect to the Server
-MongoClient.connect(url, function(err, db) {
-    assert.equal(null, err);
-    console.log("Connected correctly to server");
 
-    deleteDocument(db, function () {
-        insertDocuments(db, function() {
-            findDocuments(db, function () {
-                db.close();
-            });
-        });
-    });
-
-});
-
-var insertDocuments = function(db, callback) {
+var insertDocuments = function (db, callback) {
     // Get the documents collection
     var collection = db.collection('documents');
     // Insert some documents
     collection.insertMany([
-        {a : 1}, {a : 2}, {a : 3}
-    ], function(err, result) {
+        {a: 1}, {a: 2}, {a: 3}
+    ], function (err, result) {
         assert.equal(err, null);
         assert.equal(3, result.result.n);
         assert.equal(3, result.ops.length);
@@ -34,22 +18,22 @@ var insertDocuments = function(db, callback) {
     });
 };
 
-var deleteDocument = function(db, callback) {
+var deleteDocument = function (db, callback) {
     // Get the documents collection
     var collection = db.collection('documents');
     // Insert some documents
-    collection.deleteMany({ a : 2 }, function(err, result) {
+    collection.deleteMany({a: 2}, function (err, result) {
         assert.equal(err, null);
         console.log("Removed the documents with the field a equal to 3");
         callback(result);
     });
 }
 
-var findDocuments = function(db, callback) {
+var findDocuments = function (db, callback) {
     // Get the documents collection
     var collection = db.collection('documents');
     // Find some documents
-    collection.find({}).toArray(function(err, docs) {
+    collection.find({}).toArray(function (err, docs) {
         assert.equal(err, null);
         console.log("Found the following records");
         console.dir(docs);
@@ -152,6 +136,80 @@ var findDocuments = function(db, callback) {
     };
 }(moment));
 
+var url = 'mongodb://localhost:27017/EC_DB';
+
+MongoClient.connect(url, function (err, db) {
+    assert.equal(null, err);
+    console.log("Connected to " + url);
+
+    var eventName = "TEST_EVENT";
+    var eventTime = new Date().toJSON();
+
+    // TODO: removed these tests before production
+    addEvent(eventName, eventTime, db, function () {
+        findEvent(eventName, null, db, function () {
+            addEvent("LOL", eventTime, db, function () {
+                findAllEvents(db, function () {
+                    clearDatabase(db);
+                    findEvent(eventName, null, db, function () {
+                        db.close();
+                    });
+                });
+            });
+        });
+    });
+});
+
+var clearDatabase = function (db) {
+    console.log("CLEARING DATABASE " + db.database);
+    db.collection('documents').removeMany();
+};
+
+var addEvent = function (eventName, eventTime, db, callback) {
+    var collection = db.collection('documents');
+    var toAdd = {eventName: eventName, time: eventTime}
+
+    collection.insertOne(toAdd, function (err, result) {
+        assert.equal(err, null);
+        console.log("Added: ");
+        console.log(toAdd);
+
+        callback(result);
+    });
+};
+
+var findAllEvents = function (db, callback) {
+    var collection = db.collection('documents');
+
+    collection.find({}).toArray(function (err, docs) {
+        console.log("Found the following records:");
+        console.dir(docs);
+
+        callback(docs);
+    });
+};
+
+
+var findEvent = function (eventName, Calendar, db, callback) {
+    var collection = db.collection('documents');
+
+    collection.findOne({'eventName': eventName}, function (err, result) {
+        assert.equal(err, null);
+
+        var timeToEvent = moment.preciseDiff(Calendar);
+
+        if (result === '') {
+            console.log("Did not find event in db");
+            addEvent(eventName, new Date().toJSON(), db, callback);
+        } else {
+            console.log("Found: ");
+            console.log(result);
+        }
+        callback(result);
+    });
+};
+
+
 module.exports = function (Calendar) {
     Calendar.timeToDate = function (eventName, cb) {
 
@@ -160,30 +218,9 @@ module.exports = function (Calendar) {
         // and the response should be human readable (for example with momemt and the plugin preciseDiff)
         // keep in mind that the string could also not be found in the DB
 
-        function search() {
+        findEvent(eventName, Calendar, db, cb);
 
-            var res;
-            try {
-                res = findOne(eventName); // TODO: find eventName in db?
-                alert("res = " + res);
-
-                if (res.toString() === eventName) {
-                    res = preciseDiff(Calendar, res);
-                } else {
-                    res = preciseDiff(Calendar);
-                    Calendar.add(eventName); // TODO: store eventName in db?
-                }
-
-            } catch (e) {
-                throw e;
-            }
-            return res;
-        }
-
-
-        cb(null, search());
-
-        cb(null, "NOT YET IMPLEMENTED");
+        //cb(null, "NOT YET IMPLEMENTED");
     };
 
     Calendar.setup = function () {
