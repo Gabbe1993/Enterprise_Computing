@@ -99,7 +99,8 @@ module.exports = function(Calendar) {
         // implement a search ("findOne") operation where the name matches the "eventName"
         // and the response should be human readable (for example with momemt and the plugin preciseDiff)
         // keep in mind that the string could also not be found in the DB
-/*        function search() {
+
+        /*        function search() {
             var res;
             try {
                 res = findOne(eventName); // TODO: find eventName in db?
@@ -118,7 +119,7 @@ module.exports = function(Calendar) {
             return res;
         }
 
-        
+
         cb(null, search());
 */
         cb(null, "NOT YET IMPLEMENTED");
