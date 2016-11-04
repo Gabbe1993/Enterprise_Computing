@@ -1,6 +1,65 @@
 var moment = require('moment');
+var MongoClient = require('mongodb').MongoClient
+    , assert = require('assert');
 
-(function(moment) {
+// Connection URL
+var url = 'mongodb://localhost:27017/EC_DB';
+// Use connect method to connect to the Server
+MongoClient.connect(url, function(err, db) {
+    assert.equal(null, err);
+    console.log("Connected correctly to server");
+
+    deleteDocument(db, function () {
+        insertDocuments(db, function() {
+            findDocuments(db, function () {
+                db.close();
+            });
+        });
+    });
+
+});
+
+var insertDocuments = function(db, callback) {
+    // Get the documents collection
+    var collection = db.collection('documents');
+    // Insert some documents
+    collection.insertMany([
+        {a : 1}, {a : 2}, {a : 3}
+    ], function(err, result) {
+        assert.equal(err, null);
+        assert.equal(3, result.result.n);
+        assert.equal(3, result.ops.length);
+        console.log("Inserted 3 documents into the document collection");
+        callback(result);
+    });
+};
+
+var deleteDocument = function(db, callback) {
+    // Get the documents collection
+    var collection = db.collection('documents');
+    // Insert some documents
+    collection.deleteMany({ a : 2 }, function(err, result) {
+        assert.equal(err, null);
+        console.log("Removed the documents with the field a equal to 3");
+        callback(result);
+    });
+}
+
+var findDocuments = function(db, callback) {
+    // Get the documents collection
+    var collection = db.collection('documents');
+    // Find some documents
+    collection.find({}).toArray(function(err, docs) {
+        assert.equal(err, null);
+        console.log("Found the following records");
+        console.dir(docs);
+
+        callback(docs);
+    });
+};
+
+
+(function (moment) {
     var STRINGS = {
         nodiff: '',
         year: 'year',
@@ -17,10 +76,10 @@ var moment = require('moment');
         seconds: 'seconds',
         delimiter: ' '
     };
-    moment.fn.preciseDiff = function(d2) {
+    moment.fn.preciseDiff = function (d2) {
         return moment.preciseDiff(this, d2);
     };
-    moment.preciseDiff = function(d1, d2) {
+    moment.preciseDiff = function (d1, d2) {
         var m1 = moment(d1), m2 = moment(d2);
         if (m1.isSame(m2)) {
             return STRINGS.nodiff;
@@ -67,6 +126,7 @@ var moment = require('moment');
         function pluralize(num, word) {
             return num + ' ' + STRINGS[word + (num === 1 ? '' : 's')];
         }
+
         var result = [];
 
         if (yDiff) {
@@ -92,21 +152,22 @@ var moment = require('moment');
     };
 }(moment));
 
-module.exports = function(Calendar) {
-    Calendar.timeToDate = function(eventName, cb) {
+module.exports = function (Calendar) {
+    Calendar.timeToDate = function (eventName, cb) {
 
         // TODO:
         // implement a search ("findOne") operation where the name matches the "eventName"
         // and the response should be human readable (for example with momemt and the plugin preciseDiff)
         // keep in mind that the string could also not be found in the DB
 
-        /*        function search() {
+        function search() {
+
             var res;
             try {
                 res = findOne(eventName); // TODO: find eventName in db?
-                alert("res = "+ res);
+                alert("res = " + res);
 
-                if(res.toString() === eventName) {
+                if (res.toString() === eventName) {
                     res = preciseDiff(Calendar, res);
                 } else {
                     res = preciseDiff(Calendar);
@@ -121,21 +182,23 @@ module.exports = function(Calendar) {
 
 
         cb(null, search());
-*/
+
         cb(null, "NOT YET IMPLEMENTED");
     };
 
-    Calendar.setup = function() {
+    Calendar.setup = function () {
         Calendar.base.setup.apply(this, arguments);
 
         this.remoteMethod('timeToDate', {
             description: 'Give Back the days, hours and minutes till a specific time',
             accepts: [
-                {arg: 'eventName', type: 'String', required: true,
-                    description: 'Event name (i.e.: chrismas'}
+                {
+                    arg: 'eventName', type: 'String', required: true,
+                    description: 'Event name (i.e.: chrismas'
+                }
             ],
             returns: {arg: 'TimeToEvent', type: 'Object'},
-            http: { verb: 'GET' }
+            http: {verb: 'GET'}
         });
     };
 

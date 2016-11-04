@@ -3,6 +3,14 @@
     "name": "db",
     "connector": "memory"
   },
+  "mongodb": {
+    "connector": "loopback-connector-mongodb",
+    "url": "mongodb://localhost:27017/EC_DB",
+    "defaultForType": "mongodb",
+    "database": "EC_DB",
+    "host": "localhost",
+    "port": "27017"
+  },
   "geo": {
     "name": "geo",
     "connector": "rest",
