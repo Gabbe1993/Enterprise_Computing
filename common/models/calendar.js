@@ -217,6 +217,7 @@ module.exports = function (Calendar) {
         // implement a search ("findOne") operation where the name matches the "eventName"
         // and the response should be human readable (for example with momemt and the plugin preciseDiff)
         // keep in mind that the string could also not be found in the DB
+        console.log("Calendar = " + calendar);
 
         findEvent(eventName, Calendar, db, cb);
 
