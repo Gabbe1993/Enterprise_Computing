@@ -1,47 +1,7 @@
 var moment = require('moment');
-var MongoClient = require('mongodb').MongoClient
-    , assert = require('assert');
-
-
-var insertDocuments = function (db, callback) {
-    // Get the documents collection
-    var collection = db.collection('documents');
-    // Insert some documents
-    collection.insertMany([
-        {a: 1}, {a: 2}, {a: 3}
-    ], function (err, result) {
-        assert.equal(err, null);
-        assert.equal(3, result.result.n);
-        assert.equal(3, result.ops.length);
-        console.log("Inserted 3 documents into the document collection");
-        callback(result);
-    });
-};
-
-var deleteDocument = function (db, callback) {
-    // Get the documents collection
-    var collection = db.collection('documents');
-    // Insert some documents
-    collection.deleteMany({a: 2}, function (err, result) {
-        assert.equal(err, null);
-        console.log("Removed the documents with the field a equal to 3");
-        callback(result);
-    });
-}
-
-var findDocuments = function (db, callback) {
-    // Get the documents collection
-    var collection = db.collection('documents');
-    // Find some documents
-    collection.find({}).toArray(function (err, docs) {
-        assert.equal(err, null);
-        console.log("Found the following records");
-        console.dir(docs);
-
-        callback(docs);
-    });
-};
-
+var mongodb = require('mongodb');
+var MongoClient = require('mongodb').MongoClient;
+var db;
 
 (function (moment) {
     var STRINGS = {
@@ -138,69 +98,32 @@ var findDocuments = function (db, callback) {
 
 var url = 'mongodb://localhost:27017/EC_DB';
 
-MongoClient.connect(url, function (err, db) {
-    assert.equal(null, err);
-    console.log("Connected to " + url);
-
-    var eventName = "TEST_EVENT";
-    var eventTime = new Date().toJSON();
-
-    // TODO: removed these tests before production
-    addEvent(eventName, eventTime, db, function () {
-        findEvent(eventName, null, db, function () {
-            addEvent("LOL", eventTime, db, function () {
-                findAllEvents(db, function () {
-                    clearDatabase(db);
-                    findEvent(eventName, null, db, function () {
-                        db.close();
-                    });
-                });
-            });
-        });
-    });
-});
-
 var clearDatabase = function (db) {
     console.log("CLEARING DATABASE " + db.database);
     db.collection('documents').removeMany();
 };
 
-var addEvent = function (eventName, eventTime, db, callback) {
+var addEvent = function (eventName, eventTime, db, cb) {
     var collection = db.collection('documents');
-    var toAdd = {eventName: eventName, time: eventTime}
+    var toAdd = {eventName: eventName, time: eventTime};
 
     collection.insertOne(toAdd, function (err, result) {
-        assert.equal(err, null);
-        console.log("Added: ");
-        console.log(toAdd);
+        var res = toAdd;
+        console.log("Added to db: ");
+        console.log(res);
 
-        callback(result);
+         cb(res);
     });
 };
 
-var findAllEvents = function (db, callback) {
-    var collection = db.collection('documents');
-
-    collection.find({}).toArray(function (err, docs) {
-        console.log("Found the following records:");
-        console.dir(docs);
-
-        callback(docs);
-    });
-};
-
-
-var findEvent = function (eventName, Calendar, db, callback) {
+var findEvent = function (eventName, db, callback) {
     var collection = db.collection('documents');
 
     collection.findOne({'eventName': eventName}, function (err, result) {
-        assert.equal(err, null);
 
-        var timeToEvent = moment.preciseDiff(Calendar);
-
-        if (result === '') {
-            console.log("Did not find event in db");
-            addEvent(eventName, new Date().toJSON(), db, callback);
+        if (result == null) {
+            console.log("Did not find event " + eventName + " in db");
+            // addEvent(eventName, new Date().toJSON(), db);
         } else {
             console.log("Found: ");
             console.log(result);
@@ -209,19 +132,42 @@ var findEvent = function (eventName, Calendar, db, callback) {
     });
 };
 
+// Initialize connection once
+MongoClient.connect(url, function (err, database) {
+    if (err) throw err;
+
+    db = database;
+    console.log("Connected to " + url);
+});
+
 
 module.exports = function (Calendar) {
+
     Calendar.timeToDate = function (eventName, cb) {
+        try {
+            findEvent(eventName, db, function (json) {
+                var timeToEvent;
+                if (json != null && json.time != null) {
+                    var time = json.time;
+                    console.log("time = " + time);
+                    timeToEvent = moment.preciseDiff(time);
+                    console.log("timeToEvent = " + timeToEvent);
+                }
+                cb(null, timeToEvent);
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
-        // TODO:
-        // implement a search ("findOne") operation where the name matches the "eventName"
-        // and the response should be human readable (for example with momemt and the plugin preciseDiff)
-        // keep in mind that the string could also not be found in the DB
-        console.log("Calendar = " + calendar);
-
-        findEvent(eventName, Calendar, db, cb);
-
-        //cb(null, "NOT YET IMPLEMENTED");
+    Calendar.addEvent = function (eventName, time, cb) {
+        try {
+            addEvent(eventName, time, db, function (json) {
+                cb(null, json);
+            });
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     Calendar.setup = function () {
@@ -237,6 +183,16 @@ module.exports = function (Calendar) {
             ],
             returns: {arg: 'TimeToEvent', type: 'Object'},
             http: {verb: 'GET'}
+        });
+
+        this.remoteMethod('addEvent', {
+            description: 'Adds the given event name and time to the database',
+            accepts: [
+                {arg: 'eventName', type: 'String', required: true},
+                {arg: 'time', type: 'Date', required: true}
+            ],
+            returns: {arg: 'Added following entry', type: 'Object'},
+            http: {verb: 'PUT'}
         });
     };
 

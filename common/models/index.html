@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>REST Client</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+</head>
+
+<body>
+
+<h1> PUT method</h1>
+
+name:<br>
+<input type="text" id="name">
+<br>
+date:<br>
+<input type="datetime-local" id="date">
+
+
+<button id="put" type="button">PUT</button>
+<div id="result1"></div>
+
+<h1> GET method</h1>
+
+eventName:<br>
+<input type="text" id="event">
+
+<button id="get" type="button">GET</button>
+
+<div id="result2"></div>
+</body>
+<script>
+    $(document).ready(function () {
+        $('#put').on('click', function () {
+            var inputName = $('#name').val();
+            var inputDate = $('#date').val();
+
+            $.ajax({
+                url: 'http://localhost:3000/api/Calendars/addEvent', //'http://localhost:3000/api/Calendars', // TODO change to: http://35.163.67.194:3000/api/Calendars
+                type: 'PUT',
+                data: {eventName: inputName, time: inputDate},
+                success: function (data) {
+                    var $response = JSON.stringify(data);
+                    $('#result1').html($response);
+                }
+            });
+        });
+        $('#get').on('click', function () {
+            var event_name = $('#event').val();
+
+            $.ajax({
+                url: "http://localhost:3000/api/Calendars/timeToDate", // TODO change to: http://35.163.67.194:3000/api/Calendars/timeToDate
+                type: 'GET',
+                data: {eventName: event_name},
+                success: function (data) {
+                    var $response = JSON.stringify(data);
+                    $('#result2').html($response);
+                }
+            });
+        });
+    });
+</script>
+</html>
